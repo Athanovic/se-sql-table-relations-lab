@@ -9,7 +9,7 @@ print("RUNNING...")
 
 # STEP 1
 df_boston = pd.read_sql("""
-SELECT e.firstName, e.lastName, e.jobTitle
+SELECT e.firstName, e.lastName,
 FROM employees e
 JOIN offices o ON e.officeCode = o.officeCode
 WHERE o.city = 'Boston';
@@ -112,21 +112,18 @@ print(df_customers)
 
 # STEP 10
 df_under_20 = pd.read_sql("""
-SELECT e.employeeNumber, e.firstName, e.lastName, o.city, o.officeCode
+SELECT DISTINCT e.employeeNumber, e.firstName, e.lastName, o.city, o.officeCode
 FROM employees e
 JOIN offices o ON e.officeCode = o.officeCode
-WHERE e.employeeNumber IN (
-    SELECT DISTINCT c.salesRepEmployeeNumber
-    FROM customers c
-    JOIN orders o ON c.customerNumber = o.customerNumber
-    JOIN orderdetails od ON o.orderNumber = od.orderNumber
-    WHERE od.productCode IN (
-        SELECT od.productCode
-        FROM orderdetails od
-        JOIN orders o ON od.orderNumber = o.orderNumber
-        GROUP BY od.productCode
-        HAVING COUNT(DISTINCT o.customerNumber) < 20
-    )
+JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
+JOIN orders ord ON c.customerNumber = ord.customerNumber
+JOIN orderdetails od ON ord.orderNumber = od.orderNumber
+WHERE od.productCode IN (
+    SELECT od.productCode
+    FROM orderdetails od
+    JOIN orders ord ON od.orderNumber = ord.orderNumber
+    GROUP BY od.productCode
+    HAVING COUNT(DISTINCT ord.customerNumber) < 20
 );
 """, conn)
 print(df_under_20)
