@@ -5,16 +5,14 @@ import pandas as pd
 
 conn = sqlite3.connect('data.sqlite')
 
-print("RUNNING...")
 
 # STEP 1
 df_boston = pd.read_sql("""
-SELECT e.firstName, e.lastName, e.jobTitle
+SELECT e.firstName, e.lastName
 FROM employees e
 JOIN offices o ON e.officeCode = o.officeCode
 WHERE o.city = 'Boston';
 """, conn)
-print(df_boston)
 
 
 # STEP 2
@@ -25,7 +23,6 @@ LEFT JOIN employees e ON o.officeCode = e.officeCode
 GROUP BY o.officeCode
 HAVING COUNT(e.employeeNumber) = 0;
 """, conn)
-print(df_zero_emp)
 
 
 # STEP 3
@@ -35,7 +32,6 @@ FROM employees e
 LEFT JOIN offices o ON e.officeCode = o.officeCode
 ORDER BY e.firstName, e.lastName;
 """, conn)
-print(df_employee)
 
 
 # STEP 4
@@ -46,7 +42,6 @@ LEFT JOIN orders o ON c.customerNumber = o.customerNumber
 WHERE o.orderNumber IS NULL
 ORDER BY c.contactLastName;
 """, conn)
-print(df_contacts)
 
 
 # STEP 5
@@ -56,7 +51,6 @@ FROM customers c
 JOIN payments p ON c.customerNumber = p.customerNumber
 ORDER BY CAST(p.amount AS REAL) DESC;
 """, conn)
-print(df_payment)
 
 
 # STEP 6
@@ -69,7 +63,6 @@ GROUP BY e.employeeNumber
 HAVING AVG(c.creditLimit) > 90000
 ORDER BY num_customers DESC;
 """, conn)
-print(df_credit)
 
 
 # STEP 7
@@ -82,7 +75,6 @@ JOIN orderdetails od ON p.productCode = od.productCode
 GROUP BY p.productCode
 ORDER BY totalunits DESC;
 """, conn)
-print(df_product_sold)
 
 
 # STEP 8
@@ -95,7 +87,6 @@ JOIN orders o ON od.orderNumber = o.orderNumber
 GROUP BY p.productCode
 ORDER BY numpurchasers DESC;
 """, conn)
-print(df_total_customers)
 
 
 # STEP 9
@@ -107,29 +98,27 @@ LEFT JOIN employees e ON o.officeCode = e.officeCode
 LEFT JOIN customers c ON e.employeeNumber = c.salesRepEmployeeNumber
 GROUP BY o.officeCode;
 """, conn)
-print(df_customers)
 
 
-# STEP 10
 df_under_20 = pd.read_sql("""
 SELECT e.employeeNumber, e.firstName, e.lastName, o.city, o.officeCode
 FROM employees e
 JOIN offices o ON e.officeCode = o.officeCode
 WHERE e.employeeNumber IN (
-    SELECT DISTINCT c.salesRepEmployeeNumber
+    SELECT c.salesRepEmployeeNumber
     FROM customers c
-    JOIN orders o ON c.customerNumber = o.customerNumber
-    JOIN orderdetails od ON o.orderNumber = od.orderNumber
+    JOIN orders ord ON c.customerNumber = ord.customerNumber
+    JOIN orderdetails od ON ord.orderNumber = od.orderNumber
     WHERE od.productCode IN (
         SELECT od.productCode
         FROM orderdetails od
-        JOIN orders o ON od.orderNumber = o.orderNumber
+        JOIN orders ord ON od.orderNumber = ord.orderNumber
         GROUP BY od.productCode
-        HAVING COUNT(DISTINCT o.customerNumber) < 20
+        HAVING COUNT(DISTINCT ord.customerNumber) < 20
     )
-);
+    GROUP BY c.salesRepEmployeeNumber
+)
 """, conn)
-print(df_under_20)
 
 
 conn.close()
