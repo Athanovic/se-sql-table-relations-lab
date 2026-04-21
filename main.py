@@ -5,6 +5,13 @@ import pandas as pd
 
 conn = sqlite3.connect('data.sqlite')
 
+# Check the actual data
+df_check = pd.read_sql("""
+SELECT e.employeeNumber, e.firstName, e.lastName
+FROM employees e
+WHERE e.firstName IN ('Loui', 'Leslie')
+""", conn)
+
 
 # STEP 1
 df_boston = pd.read_sql("""
@@ -118,7 +125,8 @@ WHERE e.employeeNumber IN (
     )
     GROUP BY c.salesRepEmployeeNumber
 )
+ORDER BY e.lastName;
 """, conn)
 
-
+print(df_check)
 conn.close()
